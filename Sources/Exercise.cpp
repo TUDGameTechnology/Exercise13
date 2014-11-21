@@ -69,8 +69,11 @@ namespace {
 	}
 
 	void init() {
-		mesh = loadObj("tiger.obj");
-		image = new Texture("tiger-atlas.jpg", true);
+		mesh = loadObj("Level/ball.obj");
+		image = new Texture("Level/ball_texture.jpg", true);
+
+		//mesh = loadObj("Level/level.obj");
+		//image = new Texture("Level/texture.jpg", true);
 
 		FileReader vs("shader.vert");
 		FileReader fs("shader.frag");
@@ -91,7 +94,7 @@ namespace {
 		tex = program->getTextureUnit("tex");
 
 		// Set this to 1.0f when you do your transformations in the vertex shader
-		float scale = 0.2f;
+		float scale = 0.5f;
 
 		vertexBuffer = new VertexBuffer(mesh->numVertices, structure);
 		float* vertices = vertexBuffer->lock();
@@ -121,7 +124,7 @@ namespace {
 }
 
 int kore(int argc, char** argv) {
-	Application* app = new Application(argc, argv, width, height, false, "Exercise3");
+	Application* app = new Application(argc, argv, width, height, false, "Exercise6");
 	
 	init();
 
