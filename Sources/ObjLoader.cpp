@@ -122,7 +122,7 @@ namespace {
 			if (endPtr[0] == '/') {
 				// Parse the uv
 				hasUV[i] = true;
-				uvIndex[i] = (int)strtol(endPtr + 1, nullptr, 0) - 1;
+				uvIndex[i] = (int)strtol(endPtr + 1, &endPtr, 0) - 1;
 			} else {
 				// There is no uv
 				hasUV[i] = false;
