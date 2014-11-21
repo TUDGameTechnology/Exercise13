@@ -14,14 +14,6 @@
 
 using namespace Kore;
 
-static float clampUv(float value) {
-	return Kore::max(0.0f, Kore::min(1.0f, value));
-}
-
-static float clampNormal(float value) {
-	return Kore::max(-1.0f, Kore::min(1.0f, value));
-}
-
 class MeshObject {
 public:
 	MeshObject(const char* meshFile, const char* textureFile, const VertexStructure& structure, float scale = 1.0f) {
@@ -34,11 +26,11 @@ public:
 			vertices[i * 8 + 0] = mesh->vertices[i * 8 + 0] * scale;
 			vertices[i * 8 + 1] = mesh->vertices[i * 8 + 1] * scale;
 			vertices[i * 8 + 2] = mesh->vertices[i * 8 + 2] * scale;
-			vertices[i * 8 + 3] = clampUv(mesh->vertices[i * 8 + 3]);
-			vertices[i * 8 + 4] = clampUv(1.0f - mesh->vertices[i * 8 + 4]);
-			vertices[i * 8 + 5] = clampNormal(mesh->vertices[i * 8 + 5]);
-			vertices[i * 8 + 6] = clampNormal(mesh->vertices[i * 8 + 6]);
-			vertices[i * 8 + 7] = clampNormal(mesh->vertices[i * 8 + 7]);
+			vertices[i * 8 + 3] = mesh->vertices[i * 8 + 3];
+			vertices[i * 8 + 4] = 1.0f - mesh->vertices[i * 8 + 4];
+			vertices[i * 8 + 5] = mesh->vertices[i * 8 + 5];
+			vertices[i * 8 + 6] = mesh->vertices[i * 8 + 6];
+			vertices[i * 8 + 7] = mesh->vertices[i * 8 + 7];
 		}
 
 		vertexBuffer->unlock();
@@ -162,6 +154,9 @@ namespace {
 
 		Graphics::setRenderState(DepthTest, true);
 		Graphics::setRenderState(DepthTestCompare, ZCompareLess);
+
+		Graphics::setTextureAddressing(tex, U, Repeat);
+		Graphics::setTextureAddressing(tex, V, Repeat);
 	}
 }
 
