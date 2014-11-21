@@ -148,7 +148,7 @@ namespace {
 
 		objects[0] = new MeshObject("Level/ball.obj", "Level/unshaded.png", structure);
 		objects[0]->M = mat4::Translation(0.7f, 1.2f, -0.2f);
-		objects[1] = new MeshObject("Level/Level_top.obj", "Level/basicTiles3x3yellow.png", structure);
+		objects[1] = new MeshObject("Level/Level_top.obj", "Level/basicTiles6x6.png", structure);
 		objects[2] = new MeshObject("Level/Level_yellow.obj", "Level/basicTiles3x3yellow.png", structure);
 		objects[3] = new MeshObject("Level/Level_red.obj", "Level/basicTiles3x3red.png", structure);
 
