@@ -22,6 +22,8 @@ public:
 
 		vertexBuffer = new VertexBuffer(mesh->numVertices, structure);
 		float* vertices = vertexBuffer->lock();
+		// Copy the vertices to the vertex buffer
+		// This loop can be modified to find the size of a mesh
 		for (int i = 0; i < mesh->numVertices; ++i) {
 			vertices[i * 8 + 0] = mesh->vertices[i * 8 + 0] * scale;
 			vertices[i * 8 + 1] = mesh->vertices[i * 8 + 1] * scale;
@@ -32,7 +34,6 @@ public:
 			vertices[i * 8 + 6] = mesh->vertices[i * 8 + 6];
 			vertices[i * 8 + 7] = mesh->vertices[i * 8 + 7];
 		}
-
 		vertexBuffer->unlock();
 
 		indexBuffer = new IndexBuffer(mesh->numFaces * 3);
@@ -67,11 +68,17 @@ namespace {
 	Shader* vertexShader;
 	Shader* fragmentShader;
 	Program* program;
+
+	// null terminated array of MeshObject pointers
 	MeshObject* objects[] = { nullptr, nullptr, nullptr, nullptr, nullptr };
+
+	// The view projection matrix aka the camera
+	mat4 PV;
+
+	// uniform locations
 	TextureUnit tex;
 	ConstantLocation pvLocation;
 	ConstantLocation mLocation;
-	mat4 PV;
 
 	void update() {
 		float t = (float)(System::time() - startTime);
@@ -82,12 +89,20 @@ namespace {
 		
 		program->set();
 
+		/*
+		The exercise can be completed by modifying the PV matrix and the ball's M matrix.
+		*/
+
+		// set the camera
 		PV = mat4::Perspective(60, (float)width / (float)height, 0.1f, 100) * mat4::lookAt(vec3(0, 2, -3), vec3(0, 2, 0), vec3(0, 1, 0));
 		Graphics::setMatrix(pvLocation, PV);
 
+		// iterate the MeshObjects
 		MeshObject** current = &objects[0];
 		while (*current != nullptr) {
+			// set the model matrix
 			Graphics::setMatrix(mLocation, (*current)->M);
+
 			(*current)->render(tex);
 			++current;
 		}
@@ -121,11 +136,6 @@ namespace {
 	}
 
 	void init() {
-		
-
-		//mesh = loadObj("Level/level.obj");
-		//image = new Texture("Level/texture.jpg", true);
-
 		FileReader vs("shader.vert");
 		FileReader fs("shader.frag");
 		vertexShader = new Shader(vs.readAll(), vs.size(), VertexShader);
