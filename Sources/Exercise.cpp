@@ -22,8 +22,6 @@ public:
 
 		vertexBuffer = new VertexBuffer(mesh->numVertices, structure);
 		float* vertices = vertexBuffer->lock();
-		// Copy the vertices to the vertex buffer
-		// This loop can be modified to find the size of a mesh
 		for (int i = 0; i < mesh->numVertices; ++i) {
 			vertices[i * 8 + 0] = mesh->vertices[i * 8 + 0] * scale;
 			vertices[i * 8 + 1] = mesh->vertices[i * 8 + 1] * scale;
@@ -75,7 +73,7 @@ namespace {
 	// The view projection matrix aka the camera
 	mat4 PV;
 
-	// uniform locations
+	// uniform locations - add more as you see fit
 	TextureUnit tex;
 	ConstantLocation pvLocation;
 	ConstantLocation mLocation;
@@ -90,7 +88,8 @@ namespace {
 		program->set();
 
 		/*
-		The exercise can be completed by modifying the PV matrix and the ball's M matrix.
+		Set your uniforms for the light vector, the roughness and all further constants you encounter in the BRDF terms.
+		The BRDF itself should be implemented in the fragment shader.
 		*/
 
 		// set the camera

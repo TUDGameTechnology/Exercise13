@@ -7,8 +7,7 @@ uniform mat4 PV;
 uniform mat4 M;
 
 void kore() {
-	//gl_Position = vec4(pos.x, pos.y, pos.z, 1.0);
 	gl_Position = PV * M * vec4(pos.x, pos.y, pos.z, 1.0);
 	texCoord = tex;
-	normal = nor;
+	normal = (PV * M * vec4(nor, 0.0)).xyz;
 }
