@@ -71,11 +71,13 @@ namespace {
 	MeshObject* objects[] = { nullptr, nullptr, nullptr, nullptr, nullptr };
 
 	// The view projection matrix aka the camera
-	mat4 PV;
+	mat4 P;
+	mat4 V;
 
 	// uniform locations - add more as you see fit
 	TextureUnit tex;
-	ConstantLocation pvLocation;
+	ConstantLocation pLocation;
+	ConstantLocation vLocation;
 	ConstantLocation mLocation;
 
 	void update() {
@@ -93,8 +95,10 @@ namespace {
 		*/
 
 		// set the camera
-		PV = mat4::Perspective(60, (float)width / (float)height, 0.1f, 100) * mat4::lookAt(vec3(0, 2, -3), vec3(0, 2, 0), vec3(0, 1, 0));
-		Graphics::setMatrix(pvLocation, PV);
+		P = mat4::Perspective(60, (float)width / (float)height, 0.1f, 100);
+		V = mat4::lookAt(vec3(0, 2, -3), vec3(0, 2, 0), vec3(0, 1, 0));
+		Graphics::setMatrix(pLocation, P);
+		Graphics::setMatrix(vLocation, V);
 
 		// iterate the MeshObjects
 		MeshObject** current = &objects[0];
@@ -152,7 +156,8 @@ namespace {
 		program->link(structure);
 
 		tex = program->getTextureUnit("tex");
-		pvLocation = program->getConstantLocation("PV");
+		pLocation = program->getConstantLocation("P");
+		vLocation = program->getConstantLocation("V");
 		mLocation = program->getConstantLocation("M");
 
 		objects[0] = new MeshObject("Level/ball.obj", "Level/unshaded.png", structure);
@@ -164,13 +169,13 @@ namespace {
 		Graphics::setRenderState(DepthTest, true);
 		Graphics::setRenderState(DepthTestCompare, ZCompareLess);
 
-		Graphics::setTextureAddressing(tex, U, Repeat);
-		Graphics::setTextureAddressing(tex, V, Repeat);
+		Graphics::setTextureAddressing(tex, Kore::U, Repeat);
+		Graphics::setTextureAddressing(tex, Kore::V, Repeat);
 	}
 }
 
 int kore(int argc, char** argv) {
-	Application* app = new Application(argc, argv, width, height, false, "Exercise6");
+	Application* app = new Application(argc, argv, width, height, false, "Exercise7");
 	
 	init();
 
