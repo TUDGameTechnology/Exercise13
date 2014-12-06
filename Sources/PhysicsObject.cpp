@@ -1,9 +1,7 @@
 #include "PhysicsObject.h"
-#include "Kore\Log.h"
-
+#include <Kore/Log.h>
 
 using namespace Kore;
-
 
 PhysicsObject::PhysicsObject() {
 	Accumulator = vec3(0, 0, 0);
