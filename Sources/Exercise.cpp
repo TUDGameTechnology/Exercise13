@@ -182,8 +182,8 @@ public:
 	}
 
 	void render(TextureUnit tex, Texture* image, ConstantLocation mLocation, mat4 V) {
-		Graphics::setBlendingMode(BlendingOperation::SourceAlpha, BlendingOperation::InverseSourceAlpha);
-		Graphics::setRenderState(RenderState::DepthWrite, false);
+		Graphics::setBlendingMode(SourceAlpha, InverseSourceAlpha);
+		Graphics::setRenderState(DepthWrite, false);
 		
 		
 		// Calculate the matrix to multiply the billboards with to align them to the view
@@ -201,7 +201,7 @@ public:
 
 			particles[i].render(tex, image);
 		}
-		Graphics::setRenderState(RenderState::DepthWrite, true);
+		Graphics::setRenderState(DepthWrite, true);
 	}
 
 	float getRandom(float minValue, float maxValue) {
