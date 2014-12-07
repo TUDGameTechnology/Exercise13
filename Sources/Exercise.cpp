@@ -433,6 +433,7 @@ namespace {
 		program->setVertexShader(vertexShader);
 		program->setFragmentShader(fragmentShader);
 		program->link(structure);
+		program->set();
 
 		tex = program->getTextureUnit("tex");
 		pvLocation = program->getConstantLocation("PV");
