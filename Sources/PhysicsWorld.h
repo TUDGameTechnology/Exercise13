@@ -30,6 +30,11 @@ public:
 	// The ground plane
 	PlaneCollider plane;
 
+	TriangleCollider triangle1;
+	TriangleCollider triangle2;
+
+	TriangleMeshCollider meshCollider;
+
 	// null terminated array of PhysicsObject pointers
 	PhysicsObject** physicsObjects;
 

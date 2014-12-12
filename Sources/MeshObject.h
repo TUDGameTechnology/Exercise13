@@ -58,9 +58,10 @@ public:
 	}
 
 	mat4 M;
-private:
+
 	VertexBuffer* vertexBuffer;
 	IndexBuffer* indexBuffer;
+
 	Mesh* mesh;
 	Texture* image;
 };
