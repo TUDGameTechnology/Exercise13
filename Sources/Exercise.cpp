@@ -3,7 +3,6 @@
 #include <Kore/Application.h>
 #include <Kore/IO/FileReader.h>
 #include <Kore/Math/Core.h>
-#include <Kore/Math/Random.h>
 #include <Kore/System.h>
 #include <Kore/Input/Keyboard.h>
 #include <Kore/Input/KeyEvent.h>
@@ -11,17 +10,69 @@
 #include <Kore/Audio/Mixer.h>
 #include <Kore/Graphics/Image.h>
 #include <Kore/Graphics/Graphics.h>
-#include <Kore/Log.h>
 #include "ObjLoader.h"
+#include "SingleColorGenerator.h"
+#include "GridGenerator.h"
+#include "CombineGenerator.h"
+#include "PerlinNoiseGenerator.h"
+#include "GaussianBlurFilter.h"
+#include "OverlayCombiner.h"
 
-#include "Collision.h"
-#include "PhysicsWorld.h"
-#include "PhysicsObject.h"
 
 using namespace Kore;
 
+class MeshObject {
+public:
+	MeshObject(const char* meshFile, const char* textureFile, const VertexStructure& structure, float scale = 1.0f) {
+		mesh = loadObj(meshFile);
+		image = new Texture(textureFile, true);
 
+		vertexBuffer = new VertexBuffer(mesh->numVertices, structure);
+		float* vertices = vertexBuffer->lock();
+		for (int i = 0; i < mesh->numVertices; ++i) {
+			vertices[i * 8 + 0] = mesh->vertices[i * 8 + 0] * scale;
+			vertices[i * 8 + 1] = mesh->vertices[i * 8 + 1] * scale;
+			vertices[i * 8 + 2] = mesh->vertices[i * 8 + 2] * scale;
+			vertices[i * 8 + 3] = mesh->vertices[i * 8 + 3];
+			vertices[i * 8 + 4] = 1.0f - mesh->vertices[i * 8 + 4];
+			vertices[i * 8 + 5] = mesh->vertices[i * 8 + 5];
+			vertices[i * 8 + 6] = mesh->vertices[i * 8 + 6];
+			vertices[i * 8 + 7] = mesh->vertices[i * 8 + 7];
+		}
+		vertexBuffer->unlock();
 
+		indexBuffer = new IndexBuffer(mesh->numFaces * 3);
+		int* indices = indexBuffer->lock();
+		for (int i = 0; i < mesh->numFaces * 3; i++) {
+			indices[i] = mesh->indices[i];
+		}
+		indexBuffer->unlock();
+
+		M = mat4::Identity();
+	}
+
+	void render(TextureUnit tex) {
+		image->set(tex);
+		vertexBuffer->set();
+		indexBuffer->set();
+		Graphics::drawIndexedVertices();
+	}
+
+	void setTexture(Texture* tex) {
+		image = tex;
+	}
+
+	Texture* getTexture() {
+		return image;
+	}
+
+	mat4 M;
+private:
+	VertexBuffer* vertexBuffer;
+	IndexBuffer* indexBuffer;
+	Mesh* mesh;
+	Texture* image;
+};
 
 namespace {
 	const int width = 1024;
@@ -31,85 +82,42 @@ namespace {
 	Shader* fragmentShader;
 	Program* program;
 
-	float angle = 0.0f;
-
-
-	bool left;
-	bool right;
-	bool up;
-	bool down;
-
 	// null terminated array of MeshObject pointers
-	MeshObject* objects[] = { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
-
-	// The sound to play for the winning condition
-	Sound* winSound;
-
+	MeshObject* objects[] = { nullptr, nullptr, nullptr, nullptr, nullptr };
 
 	// The view projection matrix aka the camera
 	mat4 P;
-	mat4 View;
-	mat4 PV;
-
-	vec3 cameraPosition;
-
-	MeshObject* sphere;
-	PhysicsObject* po;
-
-	PhysicsWorld physics;
-	
+	mat4 V;
 
 	// uniform locations - add more as you see fit
 	TextureUnit tex;
-	ConstantLocation pvLocation;
+	ConstantLocation pLocation;
+	ConstantLocation vLocation;
 	ConstantLocation mLocation;
 
-	double lastTime;
+	float angle;
 
 	void update() {
-		double t = System::time() - startTime;
-		double deltaT = t - lastTime;
-		//Kore::log(Info, "%f\n", deltaT);
-		lastTime = t;
+		float t = (float)(System::time() - startTime);
 		Kore::Audio::update();
 		
 		Graphics::begin();
 		Graphics::clear(Graphics::ClearColorFlag | Graphics::ClearDepthFlag, 0xff9999FF, 1000.0f);
-
+		
 		program->set();
 
-		
-
-		/*
-		Set your uniforms for the light vector, the roughness and all further constants you encounter in the BRDF terms.
-		The BRDF itself should be implemented in the fragment shader.
-		*/
-
+	
 		// set the camera
-
-		angle += 0.3f * deltaT;
-
-		float x = 0 + 10 * Kore::cos(angle);
-		float z = 0 + 10 * Kore::sin(angle);
-		
-		cameraPosition.set(x, 2, z);
-
-		
-		cameraPosition = physics.physicsObjects[0]->GetPosition();
-		cameraPosition = cameraPosition + vec3(-10, 5, 10);
-		vec3 lookAt = physics.physicsObjects[0]->GetPosition();
-		
-
-		// Follow the ball with the camera
 		P = mat4::Perspective(60, (float)width / (float)height, 0.1f, 100);
-		View = mat4::lookAt(cameraPosition, lookAt, vec3(0, 1, 0)); 
-		PV = P * View;
+		V = mat4::lookAt(vec3(0, 0, -4), vec3(0, 0, 0), vec3(0, 1, 0));
+		Graphics::setMatrix(pLocation, P);
+		Graphics::setMatrix(vLocation, V);
 
 
-		Graphics::setMatrix(pvLocation, PV);
+		angle = t;
 
 
-
+		objects[0]->M = mat4::RotationY(angle) * mat4::RotationZ(Kore::pi / 4.0f);
 
 
 		// iterate the MeshObjects
@@ -120,83 +128,13 @@ namespace {
 
 			(*current)->render(tex);
 			++current;
-		} 
-
-		
-
-		physics.Update(deltaT);
-
-
-		PhysicsObject** currentP = &physics.physicsObjects[0];
-	
-
-		// Handle mouse inputs
-		float forceX = 0.0f;
-		float forceZ = 0.0f;
-		if (up) forceX += 1.0f;
-		if (down) forceX -= 1.0f;
-		if (left) forceZ -= 1.0f;
-		if (right) forceZ += 1.0f;
-
-		vec3 force(forceX, 0.0f, forceZ);
-		force = force * 20.0f;
-		(*currentP)->ApplyForceToCenter(force);
-
-
-
-		while (*currentP != nullptr) {
-			(*currentP)->UpdateMatrix();
-			Graphics::setMatrix(mLocation, (*currentP)->Mesh->M);
-			(*currentP)->Mesh->render(tex);
-			++currentP;
 		}
-		
-
 
 		Graphics::end();
 		Graphics::swapBuffers();
 	}
 
-	void SpawnSphere(vec3 Position, vec3 Velocity) {
-		PhysicsObject* po = new PhysicsObject();
-		po->SetPosition(Position);
-		po->Velocity = Velocity;
-		po->Collider.radius = 0.5f;
-
-		po->Mass = 5;
-		po->Mesh = sphere;
-			
-		// The impulse should carry the object forward
-		// Use the inverse of the view matrix
-
-		po->ApplyImpulse(Velocity);
-		physics.AddObject(po);
-	}
-
-	void keyDown(KeyEvent* event) {
-		if (event->keycode() == Key_Space) {
-		} else if (event->keycode() == Key_Up) {
-			up = true;
-		} else if (event->keycode() == Key_Down) {
-			down = true;
-		} else if (event->keycode() == Key_Left) {
-			right = true;
-		} else if (event->keycode() == Key_Right) {
-			left = true;
-		}
-	}
-
-	void keyUp(KeyEvent* event) {
-		if (event->keycode() == Key_Up) {
-			up = false;
-		} else if (event->keycode() == Key_Down) {
-			down = false;
-		} else if (event->keycode() == Key_Left) {
-			right = false;
-		} else if (event->keycode() == Key_Right) {
-			left = false;
-		}
-	}
+	
 
 	void mouseMove(int x, int y) {
 
@@ -206,11 +144,86 @@ namespace {
 
 	}
 
+	void mouseRelease(int button, int x, int y) {
+
+	}
+
+	// 0: Basic example: Red grid on white ground
+	// 1: Perlin Noise
+	// 2: Blur Filter
+	// 3: Overlay
+	// 4: Your own network
+	int currentTexture = -1;
+
+	SingleColorGenerator* redGen;
+	SingleColorGenerator* whiteGen;
+	CombineGenerator* combineGen;
+	GaussianBlurFilter* gaussianBlur;
+	GridGenerator* gridGen;
+	OverlayCombiner* overlay;
+	PerlinNoiseGenerator* perlin;
+	ImageGenerator* imageGen;
+
 	
 
-	void mouseRelease(int button, int x, int y) {
+	void SwitchTexture() {
+		currentTexture++;
+		if (currentTexture == 5) {
+			currentTexture = 0;
+		}
 		
+		TextureGenerator* endNode = nullptr;
+
+		switch (currentTexture) {
+		case 0:
+			endNode = combineGen;
+			combineGen->ClearInputs();
+			combineGen->AddInput(whiteGen);
+			combineGen->AddInput(gridGen);
+			break;
+		
+		case 1:
+			endNode = perlin;
+			break;
+
+		case 2:
+			endNode = gaussianBlur;
+			gaussianBlur->ClearInputs();
+			gaussianBlur->AddInput(imageGen);
+			break;
+
+		case 3:
+			endNode = overlay;
+			overlay->ClearInputs();
+			overlay->AddInput(imageGen);
+			overlay->AddInput(redGen);
+			break;
+
+		
+
+		case 4:
+			endNode = whiteGen;
+			// Task 1.4: Implement your own effect here
+
+			break;
+		}
+
+		objects[0]->setTexture(endNode->Generate(512, 512));
+
 	}
+
+	void keyDown(KeyEvent* event) {
+		if (event->keycode() == Key_Space) {
+			SwitchTexture();
+		}
+	}
+
+	void keyUp(KeyEvent* event) {
+		if (event->keycode() == Key_Left) {
+			// ...
+		}
+	}
+
 
 	void init() {
 		FileReader vs("shader.vert");
@@ -230,53 +243,62 @@ namespace {
 		program->link(structure);
 
 		tex = program->getTextureUnit("tex");
-		pvLocation = program->getConstantLocation("PV");
+		pLocation = program->getConstantLocation("P");
+		vLocation = program->getConstantLocation("V");
 		mLocation = program->getConstantLocation("M");
 
-		objects[0] = new MeshObject("Base.obj", "Level/basicTiles6x6.png", structure);
-		objects[0]->M = mat4::Translation(0.0f, -100.0f, 0.0f);
+		objects[0] = new MeshObject("box.obj", "darmstadt.jpg", structure);
 
-		objects[1] = new MeshObject("Level/Level_top.obj", "Level/basicTiles6x6.png", structure);
-		objects[2] = new MeshObject("Level/Level_yellow.obj", "Level/basicTiles3x3yellow.png", structure);
-		objects[3] = new MeshObject("Level/Level_red.obj", "Level/basicTiles3x3red.png", structure);
+		// Solid red
+		redGen = new SingleColorGenerator(0, 0, 1, 1);
 
-		sphere = new MeshObject("ball_at_origin.obj", "Level/unshaded.png", structure);
+		// Solid white
+		whiteGen = new SingleColorGenerator(1, 1, 1, 1);
 
-		SpawnSphere(vec3(-30, 1.8f, 30.f), vec3(0, 0, 0));
+		// Combine
+		combineGen = new CombineGenerator();
 
-		physics.meshCollider.mesh = objects[1];
-		
-		// Sound source: http://opengameart.org/content/level-up-sound-effects
-		// Task 1.3: Play this sound when the goal area is reached
-		winSound = new Sound("chipquest.wav");
-		Mixer::play(winSound);
+		// Gaussian blur
+		gaussianBlur = new GaussianBlurFilter(10, 2.0f);
+
+		// Grid
+		gridGen = new GridGenerator(8, 24, 1, 0, 0, 1);
+
+		// Overlay
+		overlay = new OverlayCombiner();
+
+		// Perlin noise
+		perlin = new PerlinNoiseGenerator(20, 1);
+
+		// Image
+		imageGen = new ImageGenerator(objects[0]->getTexture());
+
+
+
+		SwitchTexture();
+
+
+		angle = 0.0f;
 
 		Graphics::setRenderState(DepthTest, true);
 		Graphics::setRenderState(DepthTestCompare, ZCompareLess);
 
-		Graphics::setTextureAddressing(tex, U, Repeat);
-		Graphics::setTextureAddressing(tex, V, Repeat);
-
-		
-
-		
-
+		Graphics::setTextureAddressing(tex, Kore::U, Repeat);
+		Graphics::setTextureAddressing(tex, Kore::V, Repeat);
 	}
 }
 
 int kore(int argc, char** argv) {
-	Application* app = new Application(argc, argv, width, height, false, "Exercise8");
-	Kore::Mixer::init();
-	Kore::Audio::init();
-
+	Application* app = new Application(argc, argv, width, height, false, "Exercise10");
+	
 	init();
 
 	app->setCallback(update);
 
 	startTime = System::time();
-	lastTime = 0.0f;
-	
-	
+	Kore::Mixer::init();
+	Kore::Audio::init();
+	//Kore::Mixer::play(new SoundStream("back.ogg", true));
 	
 	Keyboard::the()->KeyDown = keyDown;
 	Keyboard::the()->KeyUp = keyUp;
