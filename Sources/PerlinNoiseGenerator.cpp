@@ -69,7 +69,7 @@ Texture* PerlinNoiseGenerator::Generate(int width, int height) {
 	}
 
 	
-	Texture* texture = new Texture(width, height, Kore::Image::Format::RGBA32, true);
+	Texture* texture = new Texture(width, height, Kore::Texture::RGBA32, true);
 	u8* data = texture->lock();
 
 

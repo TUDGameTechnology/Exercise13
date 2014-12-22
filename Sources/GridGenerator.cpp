@@ -2,7 +2,7 @@
 
 
 Texture* GridGenerator::Generate(int width, int height) {
-	Texture* texture = new Texture(width, height, Kore::Image::Format::RGBA32, true);
+	Texture* texture = new Texture(width, height, Kore::Texture::RGBA32, true);
 	u8 values[4];
 	u8* data = texture->lock();
 	values[0] = b * 255;

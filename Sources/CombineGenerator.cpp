@@ -1,7 +1,7 @@
 #include "CombineGenerator.h"
 
 Texture* CombineGenerator::Generate(int width, int height) {
-	Texture* texture = new Texture(width, height, Kore::Image::Format::RGBA32, true);
+	Texture* texture = new Texture(width, height, Kore::Texture::RGBA32, true);
 	texture1 = inputs[0]->Generate(width, height);
 	texture2 = inputs[1]->Generate(width, height);
 

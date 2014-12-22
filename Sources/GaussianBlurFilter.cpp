@@ -28,7 +28,7 @@ void GaussianBlurFilter::ApplyKernel(u8* original, u8* pixel, int x, int y, floa
 
 
 Texture* GaussianBlurFilter::Generate(int width, int height) {
-	Texture* texture = new Texture(width, height, Kore::Image::Format::RGBA32, true);
+	Texture* texture = new Texture(width, height, Kore::Texture::RGBA32, true);
 	u8 values[4];
 	u8* data = texture->lock();
 	
