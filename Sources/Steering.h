@@ -171,16 +171,8 @@ public:
 	*/
 	virtual void getSteering(SteeringOutput* output) {
 		// Task 1.1: Fill out this function
-		// First work out the direction
-		/* output->linear = *target;
-		output->linear -= character->Position;
-
-		// If there is no direction, do nothing
-		if (output->linear.getLength() > 0)
-		{
-			output->linear = output->linear.normalize();
-			output->linear *= maxAcceleration;
-		} */
+		// Write the result to output->linear
+		// You can get your own position using character->Position
 	}
 };
 
@@ -198,17 +190,8 @@ public:
 	*/
 	virtual void getSteering(SteeringOutput* output) {
 		// Task 1.1: Fill out this function
-		
-		// First work out the direction
-		/* output->linear = character->Position;
-		output->linear -= *target;
-
-		// If there is no direction, do nothing
-		if (output->linear.getLength() > 0)
-		{
-			output->linear = output->linear.normalize();
-			output->linear *= maxAcceleration;
-		} */
+		// Write the result to output->linear
+		// You can get your own position using character->Position
 	}
 };
 
