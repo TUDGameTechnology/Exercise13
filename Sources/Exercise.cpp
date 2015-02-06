@@ -162,24 +162,25 @@ namespace {
 		}
 	};
 
+	// Task 1.3: Complete this class so that it correctly returns 
 	// Checks if the moon is closer or further away from the specified distance
 	class MoonCondition : public Condition {
 	public:
-		float transitionDistance;
+		//float transitionDistance;
 
-		bool checkIfCloser;
+		//bool checkIfCloser;
 
-		AICharacter* earthCharacter;
+		//AICharacter* earthCharacter;
 
-		AICharacter* moonCharacter;
+		//AICharacter* moonCharacter;
 
-		bool lastResult;
+		//bool lastResult;
 		
 		/**
 		* Performs the test for this condition.
 		*/
 		virtual bool test() {
-			float distance = earthCharacter->Position.distance(moonCharacter->Position);
+			/* float distance = earthCharacter->Position.distance(moonCharacter->Position);
 			bool result;
 			
 
@@ -220,7 +221,8 @@ namespace {
 
 			lastResult = result;
 
-			return result;
+			return result; */
+			return false;
 		}
 	};
 
@@ -423,17 +425,21 @@ namespace {
 		MoonTransition* FollowingToWandering = new MoonTransition();
 		FollowingToWandering->target = wanderState;
 
+		// Task 1.3: After you have completed the MoonCondition object, instantiate it here
+
 		MoonCondition* ShouldFollow = new MoonCondition();
-		ShouldFollow->checkIfCloser = true;
-		ShouldFollow->earthCharacter = earth;
-		ShouldFollow->moonCharacter = moon;
-		ShouldFollow->transitionDistance = 1.0f;
+		//ShouldFollow->checkIfCloser = true;
+		//ShouldFollow->earthCharacter = earth;
+		//ShouldFollow->moonCharacter = moon;
+		//ShouldFollow->transitionDistance = 1.0f;
 
 		MoonCondition* ShouldWander = new MoonCondition();
-		ShouldWander->checkIfCloser = false;
-		ShouldWander->earthCharacter = earth;
-		ShouldWander->moonCharacter = moon;
-		ShouldWander->transitionDistance = 1.0f;
+		//ShouldWander->checkIfCloser = false;
+		//ShouldWander->earthCharacter = earth;
+		//ShouldWander->moonCharacter = moon;
+		//ShouldWander->transitionDistance = 1.0f;
+
+		
 
 		WanderingToFollowing->condition = ShouldFollow;
 		FollowingToWandering->condition = ShouldWander;

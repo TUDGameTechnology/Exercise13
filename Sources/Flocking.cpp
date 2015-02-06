@@ -1,5 +1,3 @@
-
-
 /*
 * Steering behaviours for the flocking demo.
 *
@@ -19,6 +17,7 @@ Flock::Flock()
 inNeighbourhood(0), arraySize(0)
 {}
 
+// Task 1.2: Examine this function and explain the two parameters neighbourhoodSize and neighbourhoodMinDP
 unsigned Flock::prepareNeighourhood(
 	const AICharacter* of,
 	float size,
@@ -144,7 +143,7 @@ void Cohesion::getSteering(SteeringOutput* output)
 	// Work out their center of mass
 	vec2 cofm = theFlock->getNeighbourhoodCenter();
 
-	// Steer away from it.
+	// Steer towards it
 	seek.maxAcceleration = maxAcceleration;
 	seek.character = character;
 	seek.target = &cofm;
