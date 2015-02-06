@@ -87,7 +87,7 @@ vec2 Flock::getNeighbourhoodCenter()
 			count++;
 		}
 	}
-	center *= 1.0 / (float)count;
+	center *= 1.0f / (float)count;
 
 	return center;
 }
@@ -107,7 +107,7 @@ vec2 Flock::getNeighbourhoodAverageVelocity()
 			count++;
 		}
 	}
-	center *= 1.0 / (float)count;
+	center *= 1.0f / (float)count;
 
 	return center;
 }
