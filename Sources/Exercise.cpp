@@ -24,9 +24,11 @@ using namespace Kore;
 
 
 
+#define WORLD_SIZE 3.0f
 
-
-
+#define TRIM_WORLD(var) \
+if (var < -WORLD_SIZE) var = WORLD_SIZE; \
+if (var > WORLD_SIZE) var = -WORLD_SIZE;
 
 
 
@@ -34,7 +36,7 @@ using namespace Kore;
 
 namespace {
 	const int width = 1024;
-	const int height = 768;
+	const int height = 1024;
 	const int numBoids = 20;
 	double startTime;
 	Shader* vertexShader;
@@ -239,11 +241,9 @@ namespace {
 		
 
 
-#define WORLD_SIZE 2.0f
 
-#define TRIM_WORLD(var) \
-		if (var < -WORLD_SIZE) var = WORLD_SIZE; \
-		if (var > WORLD_SIZE) var = -WORLD_SIZE;
+
+
 
 		// Keep in bounds of the world
 		TRIM_WORLD(moon->Position[0]);
@@ -255,7 +255,7 @@ namespace {
 
 
 		moon->meshObject->M = mat4::Translation(moon->Position[0], 0.0f, moon->Position[1]);
-		earth->meshObject->M = mat4::Translation(earth->Position[0], 0.0f, earth->Position[1]);
+		earth->meshObject->M = mat4::Translation(earth->Position[0], 0.0f, earth->Position[1]) * mat4::Scale(2.0f, 2.0f, 2.0f);
 
 
 
@@ -304,11 +304,11 @@ namespace {
 
 
 		// set the camera
-		P = mat4::Perspective(60, (float)width / (float)height, 0.1f, 100);
-		//float val = 1.0f;
-		//P = mat4::orthogonalProjection(-val, val, -val, val, -val, val);
-		View = mat4::lookAt(vec3(0, 4, 0), vec3(0, 0, 0), vec3(0, 0, 1.0f));
-		//V = mat4::Identity();
+		//P = mat4::Perspective(60, (float)width / (float)height, 0.1f, 100);
+		float val = WORLD_SIZE;
+		P = mat4::orthogonalProjection(-val, val, -val, val, -val, val);
+		//View = mat4::lookAt(vec3(0, 4, 0), vec3(0, 0, 0), vec3(0, 0, 1.0f));
+		View = mat4::RotationX(Kore::pi / 2.0f * 3.0f);
 		Graphics::setMatrix(pLocation, P);
 		Graphics::setMatrix(vLocation, View);
 
@@ -414,6 +414,7 @@ namespace {
 		objects[0] = new MeshObject("Level/ball.obj", "Level/unshaded.png", structure);
 		objects[0]->M = mat4::Identity();
 		objects[1] = new MeshObject("Level/plane.obj", "Level/StarMap.png", structure);
+		objects[1]->M = mat4::Translation(0.0f, 0.5f, 0.0f);
 		objects[2] = new MeshObject("Level/ball.obj", "Level/moonmap1k.jpg", structure);
 		objects[3] = new MeshObject("Level/boid.obj", "Level/basicTiles3x3red.png", structure);
 		objects[3]->M = mat4::Scale(0.1f, 0.1f, 0.1f);
