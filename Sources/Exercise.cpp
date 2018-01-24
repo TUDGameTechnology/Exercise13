@@ -1,18 +1,17 @@
 #include "pch.h"
 
-#include <Kore/Application.h>
 #include <Kore/IO/FileReader.h>
 #include <Kore/Math/Core.h>
 #include <Kore/System.h>
 #include <Kore/Input/Keyboard.h>
-#include <Kore/Input/KeyEvent.h>
 #include <Kore/Input/Mouse.h>
-#include <Kore/Audio/Mixer.h>
-#include <Kore/Graphics/Image.h>
-#include <Kore/Graphics/Graphics.h>
+#include <Kore/Graphics1/Image.h>
+#include <Kore/Graphics4/Graphics.h>
+#include <Kore/Graphics4/PipelineState.h>
 #include <Kore/Math/Random.h>
 #include <Kore/Log.h>
 
+#include "Memory.h"
 #include "MeshObject.h"
 #include "Steering.h"
 #include "Flocking.h"
@@ -75,9 +74,9 @@ namespace {
 	
 
 	double startTime;
-	Shader* vertexShader;
-	Shader* fragmentShader;
-	Program* program;
+	Graphics4::Shader* vertexShader;
+	Graphics4::Shader* fragmentShader;
+	Graphics4::PipelineState* pipeline;
 
 	double lastTime;
 
@@ -89,10 +88,10 @@ namespace {
 	mat4 View;
 
 	// uniform locations - add more as you see fit
-	TextureUnit tex;
-	ConstantLocation pLocation;
-	ConstantLocation vLocation;
-	ConstantLocation mLocation;
+	Graphics4::TextureUnit tex;
+	Graphics4::ConstantLocation pLocation;
+	Graphics4::ConstantLocation vLocation;
+	Graphics4::ConstantLocation mLocation;
 
 	
 
@@ -257,83 +256,81 @@ namespace {
 
 		// Update the AI
 		updateAI((float)deltaT);
+		
+		Graphics4::begin();
+		Graphics4::clear(Graphics4::ClearColorFlag | Graphics4::ClearDepthFlag, 0xff9999FF, 1000.0f);
 
-		Kore::Audio::update();
-
-		Graphics::begin();
-		Graphics::clear(Graphics::ClearColorFlag | Graphics::ClearDepthFlag, 0xff9999FF, 1000.0f);
-
-		program->set();
+		Graphics4::setPipeline(pipeline);
 
 		// set the camera - orthogonal projection
 		float val = WORLD_SIZE;
 		P = mat4::orthogonalProjection(-val, val, -val, val, -val, val);
 		View = mat4::RotationX(Kore::pi / 2.0f * 3.0f);
-		Graphics::setMatrix(pLocation, P);
-		Graphics::setMatrix(vLocation, View);
+		Graphics4::setMatrix(pLocation, P);
+		Graphics4::setMatrix(vLocation, View);
 
 
 		// iterate the MeshObjects
 		MeshObject** current = &objects[0];
 		while (*current != nullptr) {
 			// set the model matrix
-			Graphics::setMatrix(mLocation, (*current)->M);
+			Graphics4::setMatrix(mLocation, (*current)->M);
 
 			(*current)->render(tex);
 			++current;
 		}
 
-		Graphics::end();
-		Graphics::swapBuffers();
+		Graphics4::end();
+		Graphics4::swapBuffers();
 	}
 
 
 
 
 
-	void mouseMove(int x, int y) {
+	void mouseMove(int windowId, int x, int y, int movementX, int movementY) {
 
 	}
 
-	void mousePress(int button, int x, int y) {
+	void mousePress(int windowId, int button, int x, int y) {
 
 	}
 
-	void mouseRelease(int button, int x, int y) {
+	void mouseRelease(int windowId, int button, int x, int y) {
 
 	}
 
-	void keyDown(KeyEvent* event) {
+	void keyDown(KeyCode code) {
 
 		float movementDelta = 0.1f;
 
-		if (event->keycode() == Key_Left) {
+		if (code == KeyLeft) {
 			deltaPosition[0] = -movementDelta;
 		}
-		else if (event->keycode() == Key_Right) {
+		else if (code == KeyRight) {
 			deltaPosition[0] = movementDelta;
 		}
-		else if (event->keycode() == Key_Up) {
+		else if (code == KeyUp) {
 			deltaPosition[1] = movementDelta;
 		}
-		else if (event->keycode() == Key_Down) {
+		else if (code == KeyDown) {
 			deltaPosition[1] = -movementDelta;
 		}
 	}
 
-	void keyUp(KeyEvent* event) {
+	void keyUp(KeyCode code) {
 
 
-		if (event->keycode() == Key_Left) {
+		if (code == KeyLeft) {
 			deltaPosition[0] = 0.0f;
 		}
-		else if (event->keycode() == Key_Right) {
+		else if (code == KeyRight) {
 			deltaPosition[0] = 0.0f;
 		}
-		else if (event->keycode() == Key_Up) {
+		else if (code == KeyUp) {
 			deltaPosition[1] = 0.0f;
 		}
-		else if (event->keycode() == Key_Down) {
+		else if (code == KeyDown) {
 			deltaPosition[1] = 0.0f;
 		}
 	}
@@ -448,24 +445,28 @@ namespace {
 	void init() {
 		FileReader vs("shader.vert");
 		FileReader fs("shader.frag");
-		vertexShader = new Shader(vs.readAll(), vs.size(), VertexShader);
-		fragmentShader = new Shader(fs.readAll(), fs.size(), FragmentShader);
+		vertexShader = new Graphics4::Shader(vs.readAll(), vs.size(), Graphics4::VertexShader);
+		fragmentShader = new Graphics4::Shader(fs.readAll(), fs.size(), Graphics4::FragmentShader);
 
 		// This defines the structure of your Vertex Buffer
-		VertexStructure structure;
-		structure.add("pos", Float3VertexData);
-		structure.add("tex", Float2VertexData);
-		structure.add("nor", Float3VertexData);
+		Graphics4::VertexStructure structure;
+		structure.add("pos", Graphics4::Float3VertexData);
+		structure.add("tex", Graphics4::Float2VertexData);
+		structure.add("nor", Graphics4::Float3VertexData);
 
-		program = new Program;
-		program->setVertexShader(vertexShader);
-		program->setFragmentShader(fragmentShader);
-		program->link(structure);
+		pipeline = new Graphics4::PipelineState;
+		pipeline->inputLayout[0] = &structure;
+		pipeline->inputLayout[1] = nullptr;
+		pipeline->vertexShader = vertexShader;
+		pipeline->fragmentShader = fragmentShader;
+		pipeline->depthMode = Graphics4::ZCompareLess;
+		pipeline->depthWrite = true;
+		pipeline->compile();
 
-		tex = program->getTextureUnit("tex");
-		pLocation = program->getConstantLocation("P");
-		vLocation = program->getConstantLocation("V");
-		mLocation = program->getConstantLocation("M");
+		tex = pipeline->getTextureUnit("tex");
+		pLocation = pipeline->getConstantLocation("P");
+		vLocation = pipeline->getConstantLocation("V");
+		mLocation = pipeline->getConstantLocation("M");
 
 		// Object 0 is the Earth
 		objects[0] = new MeshObject("Level/ball.obj", "Level/unshaded.png", structure);
@@ -485,29 +486,22 @@ namespace {
 		// Initialize the AI
 		initAI();
 
-		Graphics::setRenderState(DepthTest, true);
-		Graphics::setRenderState(DepthTestCompare, ZCompareLess);
-
-		Graphics::setTextureAddressing(tex, Kore::U, Repeat);
-		Graphics::setTextureAddressing(tex, Kore::V, Repeat);
-
+		Graphics4::setTextureAddressing(tex, Graphics4::V, Graphics4::Repeat);
+		Graphics4::setTextureAddressing(tex, Graphics4::V, Graphics4::Repeat);
 	}
 
 }
 
 	int kore(int argc, char** argv) {
-		Application* app = new Application(argc, argv, width, height, false, "Exercise14");
-
+		Kore::System::init("Exercise 13", width, height);
+		
+		Memory::init();
 		init();
 
-		app->setCallback(update);
+		Kore::System::setCallback(update);
 
 		startTime = System::time();
 		lastTime = 0.0f;
-
-		Kore::Mixer::init();
-		Kore::Audio::init();
-		//Kore::Mixer::play(new SoundStream("back.ogg", true));
 
 		Keyboard::the()->KeyDown = keyDown;
 		Keyboard::the()->KeyUp = keyUp;
@@ -515,9 +509,7 @@ namespace {
 		Mouse::the()->Press = mousePress;
 		Mouse::the()->Release = mouseRelease;
 
-		app->start();
-
-		delete app;
+		Kore::System::start();
 
 		return 0;
 	}
