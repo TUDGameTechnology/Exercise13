@@ -155,7 +155,7 @@ namespace {
 	};
 	
 	/************************************************************************/
-	// Task 1.3: Complete this class so that it correctly returns
+	// Task 13.2a: Complete this class so that it correctly returns
 	// Checks if the moon is closer or further away from the specified distance
 	/************************************************************************/
 	class MoonCondition : public Condition {
@@ -360,7 +360,7 @@ namespace {
 		FollowingToWandering->target = wanderState;
 		
 		/************************************************************************/
-		// Task 1.3: After you have completed the MoonCondition object, instantiate it here
+		// Task 13.2b: After you have completed the MoonCondition object, instantiate it here
 		/************************************************************************/
 		
 		MoonCondition* ShouldFollow = new MoonCondition();
