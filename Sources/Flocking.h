@@ -46,12 +46,12 @@ public:
 	/**
 	* Returns the geometric center of the flock.
 	*/
-	vec2 getNeighbourhoodCenter();
+	Kore::vec2 getNeighbourhoodCenter();
 
 	/**
 	* Returns the average velocity of the flock.
 	*/
-	vec2 getNeighbourhoodAverageVelocity();
+	Kore::vec2 getNeighbourhoodAverageVelocity();
 };
 
 class BoidSteeringBehaviour : public SteeringBehaviour
